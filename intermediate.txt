@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract MyNFT {
+    struct Token {
+        address owner;
+        string tokenURI;
+    }
+
+    mapping(uint256 => Token) private tokens;
+    mapping(address => uint256[]) private ownedTokens;
+
+    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+
+    function mintNFT(address recipient, string memory tokenURI) public returns (uint256) {
+        uint256 tokenId = uint256(keccak256(abi.encodePacked(msg.sender, block.timestamp)));
+
+        tokens[tokenId] = Token(recipient, tokenURI);
+        ownedTokens[recipient].push(tokenId);
+
+        emit Transfer(address(0), recipient, tokenId);
+
+        return tokenId;
+    }
+
+    function balanceOf(address owner) public view returns (uint256) {
+        return ownedTokens[owner].length;
+    }
+
+    function ownerOf(uint256 tokenId) public view returns (address) {
+        require(tokens[tokenId].owner != address(0), "Token does not exist");
+        return tokens[tokenId].owner;
+    }
+
+    function transfer(address to, uint256 tokenId) public {
+        require(tokens[tokenId].owner == msg.sender, "You are not the owner of the token");
+
+        tokens[tokenId].owner = to;
+        ownedTokens[msg.sender].remove(tokenId);
+        ownedTokens[to].push(tokenId);
+
+        emit Transfer(msg.sender, to, tokenId);
+    }
+}
